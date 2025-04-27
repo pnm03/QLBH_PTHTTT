@@ -16,7 +16,9 @@ import {
   DocumentTextIcon, // Added for better icon context
   PhotoIcon, // Added for image placeholder
   UserCircleIcon, // Added for customer placeholder
+  CreditCardIcon, // Added for payment
 } from '@heroicons/react/24/outline'
+import PaymentPopup from './PaymentPopup'
 
 // Định nghĩa các interface (Giữ nguyên)
 interface Shipping {
@@ -39,6 +41,10 @@ interface Shipping {
   hight?: number | null // Sửa lỗi chính tả: height -> hight (theo code gốc)
   unit_size?: string | null
   cod_shipping?: boolean | null
+  orders?: {
+    status: string | null
+    price: number | null
+  } | null
 }
 
 interface Order {
@@ -97,6 +103,9 @@ export default function ShippingOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [orderDetails, setOrderDetails] = useState<OrderDetail[]>([])
   const [loadingDetails, setLoadingDetails] = useState(false) // State loading riêng cho modal
+
+  // State cho popup thanh toán
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false)
 
   // State cho phân trang
   const [currentPage, setCurrentPage] = useState(1)
@@ -194,7 +203,13 @@ export default function ShippingOrdersPage() {
     try {
       let query = supabase
         .from('shippings')
-        .select('*', { count: 'exact' }) // Lấy count để phân trang chính xác
+        .select(`
+          *,
+          orders:order_id (
+            status,
+            price
+          )
+        `, { count: 'exact' }) // Lấy count để phân trang chính xác và join với bảng orders
         .order('created_at', { ascending: false })
 
       // Áp dụng bộ lọc theo trạng thái
@@ -391,7 +406,7 @@ export default function ShippingOrdersPage() {
        if (finalOrder && finalOrder.payment_method) {
          try {
             const { data: paymentData, error: paymentError } = await supabase
-                .from('Payments') // Đảm bảo tên bảng chính xác
+                .from('payments') // Đã sửa tên bảng thành chữ thường
                 .select('payment_method_name')
                 .eq('payment_id', finalOrder.payment_method)
                 .single(); // Dùng single vì mong đợi 1 kết quả
@@ -455,6 +470,63 @@ export default function ShippingOrdersPage() {
     setOrderDetails([])
     setLoadingDetails(false) // Đảm bảo reset loading
     setError(null) // Reset lỗi khi đóng modal
+    setShowPaymentPopup(false) // Đảm bảo đóng popup thanh toán
+  }
+
+  // Mở popup thanh toán
+  const openPaymentPopup = () => {
+    setShowPaymentPopup(true)
+  }
+
+  // Xử lý sau khi thanh toán thành công
+  const handlePaymentSuccess = async () => {
+    if (!selectedShipping) return
+
+    // Tải lại thông tin đơn hàng để cập nhật trạng thái
+    try {
+      setLoadingDetails(true)
+
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('order_id', selectedShipping.order_id)
+        .single()
+
+      if (orderError) {
+        console.error('Lỗi khi tải lại thông tin đơn hàng:', orderError)
+      } else if (orderData) {
+        // Cập nhật thông tin đơn hàng
+        setSelectedOrder({
+          ...orderData,
+          customer_name: selectedShipping.name_customer || 'Không xác định',
+          payment_method_name: 'Đã thanh toán', // Tạm thời hiển thị "Đã thanh toán"
+          shipping_id: selectedShipping.shipping_id
+        })
+
+        // Lấy tên phương thức thanh toán
+        if (orderData.payment_method) {
+          const { data: paymentData } = await supabase
+            .from('payments')
+            .select('payment_method_name')
+            .eq('payment_id', orderData.payment_method)
+            .single()
+
+          if (paymentData) {
+            setSelectedOrder(prev => prev ? {
+              ...prev,
+              payment_method_name: paymentData.payment_method_name
+            } : null)
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Lỗi khi cập nhật thông tin sau thanh toán:', err)
+    } finally {
+      setLoadingDetails(false)
+    }
+
+    // Tải lại danh sách đơn vận chuyển
+    searchShippings(false)
   }
 
   // Xử lý thay đổi input khi chỉnh sửa
@@ -1100,13 +1172,19 @@ export default function ShippingOrdersPage() {
                               <div className="space-y-1 p-1">
                                   <p className="text-sm">
                                       <span className="font-medium text-gray-600">Giá trị đơn hàng:</span>
-                                      <span className="font-medium text-gray-900 ml-1">{formatCurrency(0)}</span>
+                                      <span className="font-medium text-gray-900 ml-1">{formatCurrency(shipping.orders?.price || 0)}</span>
                                   </p>
                                   <p className="text-sm">
                                       <span className="font-medium text-gray-600">Trạng thái thanh toán:</span>
-                                      <span className="ml-1 px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
-                                          Chưa thanh toán
-                                      </span>
+                                      {shipping.orders?.status === 'Đã thanh toán' ? (
+                                        <span className="ml-1 px-1.5 py-0.5 text-xs font-medium rounded bg-green-100 text-green-800">
+                                            Đã thanh toán
+                                        </span>
+                                      ) : (
+                                        <span className="ml-1 px-1.5 py-0.5 text-xs font-medium rounded bg-yellow-100 text-yellow-800">
+                                            Chưa thanh toán
+                                        </span>
+                                      )}
                                   </p>
                                   <p className="text-sm">
                                       <span className="font-medium text-gray-600">Số lượng sản phẩm:</span>
@@ -1578,16 +1656,29 @@ export default function ShippingOrdersPage() {
                                          <span className="font-semibold text-gray-700">Tổng thanh toán:</span>
                                          <span className="font-bold text-lg text-indigo-700">{formatCurrency((selectedOrder?.price || 0) + (selectedShipping.shipping_cost || 0))}</span>
                                      </div>
+                                    {/* Hiển thị thông tin COD nếu có */}
                                     {selectedShipping.cod_shipping && (
                                         <p className="text-xs text-yellow-700 bg-yellow-50 p-2 rounded mt-2 italic text-center">
                                             Thu hộ COD: {formatCurrency((selectedOrder?.price || 0) + (selectedShipping.shipping_cost || 0))}
                                         </p>
                                     )}
-                                    {!selectedShipping.cod_shipping && (
+
+                                    {/* Hiển thị thông báo đã thanh toán nếu trạng thái là "Đã thanh toán" */}
+                                    {selectedOrder?.status === 'Đã thanh toán' && (
                                          <p className="text-xs text-green-700 bg-green-50 p-2 rounded mt-2 text-center">
-                                            Đã thanh toán trước
+                                            Đã thanh toán
                                          </p>
                                     )}
+
+                                    {/* Luôn hiển thị nút thanh toán */}
+                                    <button
+                                        type="button"
+                                        onClick={openPaymentPopup}
+                                        className="w-full mt-2 inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:text-sm"
+                                    >
+                                        <CreditCardIcon className="mr-1.5 h-4 w-4" />
+                                        Thanh toán
+                                    </button>
                                 </div>
                              </div>
                          </div>
@@ -1637,6 +1728,16 @@ export default function ShippingOrdersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Payment Popup */}
+      {showPaymentPopup && selectedOrder && (
+        <PaymentPopup
+          isOpen={showPaymentPopup}
+          onClose={() => setShowPaymentPopup(false)}
+          orderId={selectedOrder.order_id}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
       )}
     </div>
   )

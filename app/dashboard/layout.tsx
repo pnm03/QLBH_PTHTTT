@@ -263,6 +263,7 @@ export default function DashboardLayout({
       children: [
         { name: language === 'vi' ? 'Tìm & Xem đơn hàng' : 'Find & View Orders', href: '/dashboard/orders/search', icon: null, current: pathname.includes('/dashboard/orders/search') },
         { name: language === 'vi' ? 'Đơn vận chuyển' : 'Shipping Orders', href: '/dashboard/orders/shipping', icon: null, current: pathname.includes('/dashboard/orders/shipping') },
+        { name: language === 'vi' ? 'Trả hàng' : 'Returns', href: '/dashboard/orders/returns', icon: null, current: pathname.includes('/dashboard/orders/returns') },
       ]
     },
     {
