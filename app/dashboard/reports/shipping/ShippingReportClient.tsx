@@ -3,9 +3,8 @@
 
 import React from 'react';
 import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
-import ProductShippingDetailsPopup from '@/components/shipping/ProductShippingDetailsPopup';
+import ProductShippingDetailsPopup from '../../../../components/shipping/ProductShippingDetailsPopup';
 
 // Define the props type based on data passed from the server component
 interface TopProduct {
@@ -122,86 +121,121 @@ export default function ShippingReportClient({
       doc.setTextColor(0);
       doc.text('THONG KE TONG QUAN', 105, 75, { align: 'center' });
 
-      // Use autoTable function
-      autoTable(doc, {
-        startY: 80,
-        head: [['Chi Tieu', 'So Luong']], // ASCII safe header
-        body: [
-          ['Tong don van chuyen', isNaN(totalShipments) ? '0' : totalShipments.toString()], // ASCII safe label
-          ['Don da thanh toan', isNaN(successfulShipments) ? '0' : successfulShipments.toString()], // ASCII safe label
-          ['Ty le thanh toan (%)', isNaN(successRate) ? '0.0' : successRate.toFixed(1)], // ASCII safe label
-          ['Don da giao hang', isNaN(deliveredShipments) ? '0' : deliveredShipments.toString()], // ASCII safe label
-          ['Ty le giao thanh cong (%)', isNaN(deliverySuccessRate) ? '0.0' : deliverySuccessRate.toFixed(1)], // ASCII safe label
-        ],
-        theme: 'grid',
-        headStyles: {
-          fillColor: [41, 128, 185],
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          halign: 'center'
-        },
-        styles: {
-          font: 'helvetica',
-          overflow: 'linebreak',
-          cellPadding: 5
-        },
-        columnStyles: {
-          0: { fontStyle: 'bold' },
-          1: { halign: 'center' }
-        },
-        margin: { left: 40, right: 40 },
-        didParseCell: function (data) {
-          // Basic attempt to handle potential Vietnamese characters
-          if (typeof data.cell.raw === 'string') {
-              data.cell.text = [data.cell.raw
-                  .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
-                  .replace(/đ/g, "d").replace(/Đ/g, "D")]; // Replace đ/Đ
-          }
-        }
+      // Manually create a table
+      const startY = 80;
+      const cellPadding = 5;
+      const colWidth1 = 70;
+      const colWidth2 = 50;
+      const rowHeight = 10;
+      const tableX = 40;
+
+      // Table headers
+      doc.setFillColor(41, 128, 185);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.rect(tableX, startY, colWidth1, rowHeight, 'F');
+      doc.rect(tableX + colWidth1, startY, colWidth2, rowHeight, 'F');
+      doc.text('Chi Tieu', tableX + cellPadding, startY + rowHeight - cellPadding);
+      doc.text('So Luong', tableX + colWidth1 + colWidth2/2, startY + rowHeight - cellPadding, { align: 'center' });
+
+      // Table rows
+      const rows = [
+        ['Tong don van chuyen', isNaN(totalShipments) ? '0' : totalShipments.toString()],
+        ['Don da thanh toan', isNaN(successfulShipments) ? '0' : successfulShipments.toString()],
+        ['Ty le thanh toan (%)', isNaN(successRate) ? '0.0' : successRate.toFixed(1)],
+        ['Don da giao hang', isNaN(deliveredShipments) ? '0' : deliveredShipments.toString()],
+        ['Ty le giao thanh cong (%)', isNaN(deliverySuccessRate) ? '0.0' : deliverySuccessRate.toFixed(1)]
+      ];
+
+      // Draw rows
+      doc.setTextColor(0);
+      doc.setFontSize(10);
+
+      rows.forEach((row, i) => {
+        const y = startY + (i + 1) * rowHeight;
+
+        // Draw cell backgrounds and borders
+        doc.setDrawColor(200, 200, 200);
+        doc.setFillColor(255, 255, 255);
+        doc.rect(tableX, y, colWidth1, rowHeight, 'FD');
+        doc.rect(tableX + colWidth1, y, colWidth2, rowHeight, 'FD');
+
+        // Draw text
+        doc.setFont('helvetica', 'bold');
+        doc.text(row[0], tableX + cellPadding, y + rowHeight - cellPadding);
+
+        doc.setFont('helvetica', 'normal');
+        doc.text(row[1], tableX + colWidth1 + colWidth2/2, y + rowHeight - cellPadding, { align: 'center' });
       });
 
       // --- Top Products Table ---
-      // Get the final Y position from the previous table
-      const finalY = (doc as any).lastAutoTable?.finalY || 100;
+      // Calculate the final Y position from the previous table
+      const finalY = startY + (rows.length + 1) * rowHeight + 5;
       const tableStartY = finalY + 15;
       doc.setFontSize(12);
       doc.text('TOP SAN PHAM VAN CHUYEN NHIEU NHAT', 105, tableStartY, { align: 'center' });
 
-      // Use autoTable function for the second table
-      autoTable(doc, {
-        startY: tableStartY + 5,
-        head: [['#', 'Ten San Pham', 'So Luot Van Chuyen']], // ASCII safe header
-        body: topProducts.map((product, index) => [
-          (index + 1).toString(),
-          product.name, // Product name might have issues without proper font
-          product.count.toString(),
-        ]),
-        theme: 'striped',
-        headStyles: {
-          fillColor: [41, 128, 185],
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          halign: 'center'
-        },
-        styles: {
-          font: 'helvetica',
-          overflow: 'linebreak',
-          cellPadding: 5
-        },
-        columnStyles: {
-          0: { halign: 'center', cellWidth: 10 },
-          1: { cellWidth: 'auto' },
-          2: { halign: 'center', cellWidth: 40 }
-        },
-        margin: { left: 20, right: 20 },
-        didParseCell: function (data) {
-          // Apply the same basic character handling for the product table
-          if (typeof data.cell.raw === 'string') {
-               data.cell.text = [data.cell.raw
-                  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                  .replace(/đ/g, "d").replace(/Đ/g, "D")];
-          }
-        }
+      // Manually create the second table
+      const productTableStartY = tableStartY + 5;
+      const prodColWidth0 = 10;  // # column
+      const prodColWidth1 = 120; // Product name column
+      const prodColWidth2 = 40;  // Count column
+      const productTableX = 20;
+
+      // Table headers
+      doc.setFillColor(41, 128, 185);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+
+      // Draw header cells
+      doc.rect(productTableX, productTableStartY, prodColWidth0, rowHeight, 'F');
+      doc.rect(productTableX + prodColWidth0, productTableStartY, prodColWidth1, rowHeight, 'F');
+      doc.rect(productTableX + prodColWidth0 + prodColWidth1, productTableStartY, prodColWidth2, rowHeight, 'F');
+
+      // Header text
+      doc.text('#', productTableX + prodColWidth0/2, productTableStartY + rowHeight - cellPadding, { align: 'center' });
+      doc.text('Ten San Pham', productTableX + prodColWidth0 + cellPadding, productTableStartY + rowHeight - cellPadding);
+      doc.text('So Luot Van Chuyen', productTableX + prodColWidth0 + prodColWidth1 + prodColWidth2/2, productTableStartY + rowHeight - cellPadding, { align: 'center' });
+
+      // Draw rows
+      doc.setTextColor(0);
+      doc.setFontSize(10);
+
+      // Process product names to handle Vietnamese characters
+      const processedProducts = topProducts.map(product => ({
+        ...product,
+        processedName: product.name
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
+          .replace(/đ/g, "d").replace(/Đ/g, "D") // Replace đ/Đ
+      }));
+
+      processedProducts.forEach((product, i) => {
+        const y = productTableStartY + (i + 1) * rowHeight;
+        const isEven = i % 2 === 0;
+
+        // Draw cell backgrounds and borders
+        doc.setDrawColor(200, 200, 200);
+        doc.setFillColor(isEven ? 255 : 245, isEven ? 255 : 245, isEven ? 255 : 245);
+
+        // Draw cells
+        doc.rect(productTableX, y, prodColWidth0, rowHeight, 'FD');
+        doc.rect(productTableX + prodColWidth0, y, prodColWidth1, rowHeight, 'FD');
+        doc.rect(productTableX + prodColWidth0 + prodColWidth1, y, prodColWidth2, rowHeight, 'FD');
+
+        // Draw text
+        doc.setFont('helvetica', 'normal');
+        doc.text((i + 1).toString(), productTableX + prodColWidth0/2, y + rowHeight - cellPadding, { align: 'center' });
+
+        // Product name - truncate if too long
+        const maxChars = 40;
+        const displayName = product.processedName.length > maxChars
+          ? product.processedName.substring(0, maxChars) + '...'
+          : product.processedName;
+        doc.text(displayName, productTableX + prodColWidth0 + cellPadding, y + rowHeight - cellPadding);
+
+        // Count
+        doc.text(product.count.toString(), productTableX + prodColWidth0 + prodColWidth1 + prodColWidth2/2, y + rowHeight - cellPadding, { align: 'center' });
       });
 
       // --- Add Footer ---

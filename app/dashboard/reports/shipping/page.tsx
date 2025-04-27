@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { SupabaseClient } from '@supabase/supabase-js';
 import ShippingReportClient from './ShippingReportClient';
-import AccessDenied from '@/components/AccessDenied';
+import AccessDenied from '../../../../components/AccessDenied';
 
 export default function ShippingReportPage() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -102,13 +102,10 @@ export default function ShippingReportPage() {
         console.error('Lỗi khi lấy tổng số đơn vận chuyển:', totalError);
       }
 
-      // Truy vấn chính: Lấy tất cả đơn hàng có is_shipping = true và join với bảng shippings
+      // Truy vấn chính: Lấy tất cả đơn hàng có is_shipping = true
       const { data: ordersWithShipping, error: ordersError } = await supabase
         .from('orders')
-        .select(`
-          *,
-          shippings (*)
-        `)
+        .select('*')
         .eq('is_shipping', true);
 
       console.log('Dữ liệu đơn hàng có vận chuyển:', ordersWithShipping);
@@ -120,25 +117,48 @@ export default function ShippingReportPage() {
       // Xử lý dữ liệu để tính toán các chỉ số
       let successfulShipmentCount = 0;
       let deliveredShipmentCount = 0;
-      const successError = null;
-      const deliveredError = null;
+      let successError = null;
+      let deliveredError = null;
 
       if (ordersWithShipping && ordersWithShipping.length > 0) {
         // 2. Đơn đã thanh toán: Đếm số đơn hàng có status là "Đã thanh toán" và có vận chuyển
-        const paidOrders = ordersWithShipping.filter(order => order.status === 'Đã thanh toán');
+        // Kiểm tra cả hai giá trị có thể có: "Đã thanh toán" hoặc "paid"
+        const paidOrders = ordersWithShipping.filter(order =>
+          order.status === 'Đã thanh toán' || order.status === 'paid'
+        );
         successfulShipmentCount = paidOrders.length;
 
         console.log('Số lượng đơn hàng đã thanh toán và có vận chuyển:', successfulShipmentCount);
         console.log('Đơn hàng đã thanh toán:', paidOrders);
 
-        // 3. Đơn đã giao hàng: Lọc các đơn hàng có trạng thái vận chuyển là "Đã giao hàng"
-        const deliveredOrders = ordersWithShipping.filter(order =>
-          order.shippings && order.shippings.status === 'Đã giao hàng'
-        );
-        deliveredShipmentCount = deliveredOrders.length;
+        // 3. Đơn đã giao hàng: Lấy từ bảng shippings
+        try {
+          // Lấy danh sách order_id từ các đơn hàng có vận chuyển
+          const orderIds = ordersWithShipping.map(order => order.order_id);
 
-        console.log('Số lượng đơn đã giao hàng:', deliveredShipmentCount);
-        console.log('Dữ liệu đơn đã giao hàng:', deliveredOrders);
+          // Truy vấn bảng shippings để lấy thông tin vận chuyển
+          const { data: shippingsData, error: shippingsError } = await supabase
+            .from('shippings')
+            .select('*')
+            .in('order_id', orderIds)
+            .or('status.eq.delivered,status.eq.Đã giao hàng'); // Kiểm tra cả hai giá trị có thể có
+
+          if (shippingsError) {
+            console.error('Lỗi khi lấy thông tin vận chuyển:', shippingsError);
+            deliveredError = shippingsError.message;
+          } else {
+            deliveredShipmentCount = shippingsData ? shippingsData.length : 0;
+            console.log('Số lượng đơn đã giao hàng:', deliveredShipmentCount);
+            console.log('Dữ liệu đơn đã giao hàng:', shippingsData);
+          }
+        } catch (err) {
+          console.error('Lỗi khi xử lý dữ liệu vận chuyển:', err);
+          if (err instanceof Error) {
+            deliveredError = err.message;
+          } else {
+            deliveredError = String(err);
+          }
+        }
       } else {
         console.log('Không tìm thấy đơn hàng nào có vận chuyển');
       }
@@ -148,35 +168,38 @@ export default function ShippingReportPage() {
       let productError = null;
 
       try {
-        // Thử sử dụng RPC function nếu có
-        const { data, error } = await supabase
-          .rpc('get_top_shipped_products_v2', { limit_count: 10 });
+        // Sử dụng truy vấn trực tiếp thay vì RPC function
+        console.log('Lấy dữ liệu chi tiết đơn hàng...');
+        const { data: directData, error: directError } = await supabase
+          .from('orderdetails')
+          .select(`
+            product_id,
+            name_product,
+            order_id
+          `)
+          .order('product_id');
 
-        if (error) {
-          console.error('RPC function error:', error);
+        if (directError) {
+          console.error('Lỗi khi lấy chi tiết đơn hàng:', directError);
+          productError = directError.message;
+        } else if (directData) {
+          console.log('Đã lấy được chi tiết đơn hàng:', directData.length);
 
-          // Nếu RPC fails, sử dụng truy vấn trực tiếp
-          const { data: directData, error: directError } = await supabase
-            .from('orderdetails')
-            .select(`
-              product_id,
-              name_product,
-              order_id,
-              products (product_name)
-            `)
-            .order('product_id');
+          // Lọc để chỉ bao gồm các đơn hàng có vận chuyển
+          console.log('Lấy danh sách đơn hàng có vận chuyển...');
+          const { data: shippingOrders, error: shippingError } = await supabase
+            .from('orders')
+            .select('order_id')
+            .eq('is_shipping', true);
 
-          if (directError) {
-            console.error('Lỗi khi lấy chi tiết đơn hàng:', directError);
-            productError = directError.message;
-          } else if (directData) {
-            // Lọc để chỉ bao gồm các đơn hàng có vận chuyển
-            const { data: shippingOrders } = await supabase
-              .from('orders')
-              .select('order_id')
-              .eq('is_shipping', true);
+          if (shippingError) {
+            console.error('Lỗi khi lấy đơn hàng vận chuyển:', shippingError);
+            productError = shippingError.message;
+          } else if (shippingOrders) {
+            console.log('Đã lấy được đơn hàng vận chuyển:', shippingOrders.length);
 
-            const shippingOrderIds = shippingOrders?.map((order: {order_id: string}) => order.order_id) || [];
+            const shippingOrderIds = shippingOrders.map((order: {order_id: string}) => order.order_id);
+            console.log('Danh sách ID đơn hàng vận chuyển:', shippingOrderIds);
 
             // Đếm sản phẩm trong các đơn hàng có vận chuyển
             const productCounts: Record<string, number> = {};
@@ -196,8 +219,6 @@ export default function ShippingReportPage() {
               .sort((a, b) => b.shipment_count - a.shipment_count)
               .slice(0, 10);
           }
-        } else {
-          topProductsData = data || [];
         }
 
         console.log('Số lượng sản phẩm top:', topProductsData.length);
@@ -210,6 +231,8 @@ export default function ShippingReportPage() {
           productError = String(err);
         }
       }
+
+
 
       // --- Tính toán các chỉ số ---
       // Đảm bảo các giá trị là số hợp lệ
@@ -235,6 +258,8 @@ export default function ShippingReportPage() {
         name: item.product_name || 'Unknown Product',
         count: typeof item.shipment_count === 'number' ? item.shipment_count : 0,
       }));
+
+      console.log('Dữ liệu sản phẩm đã chuyển đổi:', topProducts);
 
       console.log('Dữ liệu báo cáo đã sẵn sàng:', {
         totalShipments: finalTotalShipments,
@@ -264,8 +289,11 @@ export default function ShippingReportPage() {
       let errorMessage = 'Lỗi không xác định khi lấy dữ liệu báo cáo';
       if (error instanceof Error) {
         errorMessage = error.message;
+        console.error('Chi tiết lỗi:', error.stack);
       } else if (typeof error === 'string') {
         errorMessage = error;
+      } else {
+        console.error('Lỗi không xác định:', JSON.stringify(error));
       }
 
       setReportData({

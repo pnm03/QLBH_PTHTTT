@@ -5,15 +5,17 @@ import { useState, useEffect } from 'react'
 // useRouter removed as unused
 import { useTheme, themeColors } from '@/app/context/ThemeContext'
 import Link from 'next/link'
-import { 
+import {
   // ChartBarIcon removed as unused
-  DocumentTextIcon, 
-  UserGroupIcon, 
+  DocumentTextIcon,
+  UserGroupIcon,
   ShoppingBagIcon,
   // ArrowTrendingUpIcon removed as unused
-  CurrencyDollarIcon,
+  // CurrencyDollarIcon removed as unused
   CalendarDaysIcon,
-  ClipboardDocumentListIcon
+  // ClipboardDocumentListIcon removed as unused
+  TruckIcon,
+  BanknotesIcon
 } from '@heroicons/react/24/outline'
 
 export default function ReportsPage() {
@@ -133,36 +135,42 @@ export default function ReportsPage() {
           </div>
         </Link> {/* Add missing closing Link tag */}
 
-        {/* Báo cáo doanh thu */}
-        <div className={`bg-white overflow-hidden shadow rounded-lg opacity-60 cursor-not-allowed`}>
+        {/* Báo cáo tài chính */}
+        <Link
+          href="/dashboard/reports/financial"
+          className={`bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300`}
+        >
           <div className="p-5">
             <div className="flex items-center">
-              <div className={`flex-shrink-0 rounded-md p-3 bg-gray-100`}>
-                <CurrencyDollarIcon className={`h-6 w-6 text-gray-600`} />
+              <div className={`flex-shrink-0 rounded-md p-3 bg-${themeColor}-100`}>
+                <BanknotesIcon className={`h-6 w-6 text-${themeColor}-600`} />
               </div>
               <div className="ml-5 w-0 flex-1">
-                <h3 className="text-lg font-medium text-gray-900">Báo cáo doanh thu</h3>
+                <h3 className="text-lg font-medium text-gray-900">Báo cáo tài chính</h3>
                 <p className="mt-1 text-sm text-gray-500">
-                  Thống kê doanh thu theo thời gian, so sánh các kỳ
+                  Thống kê thu chi, dòng tiền theo thời gian
                 </p>
               </div>
             </div>
           </div>
           <div className={`bg-gray-50 px-5 py-3 border-t border-gray-200`}>
             <div className="text-sm">
-              <span className={`font-medium text-gray-400`}>
-                Đang phát triển
+              <span className={`font-medium text-${themeColor}-600`}>
+                Xem báo cáo
               </span>
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Báo cáo vận chuyển */}
-        <div className={`bg-white overflow-hidden shadow rounded-lg opacity-60 cursor-not-allowed`}>
+        <Link
+          href="/dashboard/reports/shipping"
+          className={`bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300`}
+        >
           <div className="p-5">
             <div className="flex items-center">
-              <div className={`flex-shrink-0 rounded-md p-3 bg-gray-100`}>
-                <ClipboardDocumentListIcon className={`h-6 w-6 text-gray-600`} />
+              <div className={`flex-shrink-0 rounded-md p-3 bg-${themeColor}-100`}>
+                <TruckIcon className={`h-6 w-6 text-${themeColor}-600`} />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <h3 className="text-lg font-medium text-gray-900">Báo cáo vận chuyển</h3>
@@ -174,12 +182,12 @@ export default function ReportsPage() {
           </div>
           <div className={`bg-gray-50 px-5 py-3 border-t border-gray-200`}>
             <div className="text-sm">
-              <span className={`font-medium text-gray-400`}>
-                Đang phát triển
+              <span className={`font-medium text-${themeColor}-600`}>
+                Xem báo cáo
               </span>
             </div>
           </div>
-        </div>
+        </Link>
 
         {/* Báo cáo theo thời gian */}
         <div className={`bg-white overflow-hidden shadow rounded-lg opacity-60 cursor-not-allowed`}>

@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 import { createClient } from '@/utils/supabase/client'
-import AccessDenied from '@/components/AccessDenied'
+import AccessDenied from '../../../../components/AccessDenied'
 import {
   ArrowLeftIcon,
   DocumentArrowDownIcon,
@@ -199,7 +199,7 @@ export default function FinancialReportsPage() {
           price,
           status,
           payment_method,
-          payments(payment_method_name)
+          payments:payment_method(payment_method_name)
         `)
         .eq('status', 'Đã thanh toán')
         .order('order_date', { ascending: false })
@@ -223,15 +223,17 @@ export default function FinancialReportsPage() {
         .from('returns')
         .select(`
           return_id,
-          name_return,
           order_id,
           return_date,
           return_reason,
           refund_amount,
           status,
-          orders(payment_method, payments(payment_method_name))
+          orders(
+            payment_method,
+            payments:payment_method(payment_method_name)
+          )
         `)
-        .eq('status', 'đã chấp nhận')
+        .eq('status', 'approved') // Sử dụng 'approved' thay vì 'đã chấp nhận'
         .order('return_date', { ascending: false })
 
       // Áp dụng bộ lọc theo ngày
@@ -267,7 +269,7 @@ export default function FinancialReportsPage() {
         type: 'expense',
         amount: returnItem.refund_amount || 0,
         source: 'Trả hàng',
-        description: `${returnItem.name_return || 'Trả hàng'} #${returnItem.return_id} - ${returnItem.return_reason || ''}`,
+        description: `Trả hàng #${returnItem.return_id} - ${returnItem.return_reason || ''}`,
         order_id: returnItem.order_id,
         return_id: returnItem.return_id.toString(),
         payment_method: returnItem.orders?.payments?.payment_method_name || 'Không xác định'
