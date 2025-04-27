@@ -1,24 +1,24 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useRouter } from 'next/navigation'
+// createClientComponentClient removed as unused
+// useRouter removed as unused
 import { useTheme, themeColors } from '@/app/context/ThemeContext'
 import Link from 'next/link'
 import { 
-  ChartBarIcon, 
+  // ChartBarIcon removed as unused
   DocumentTextIcon, 
   UserGroupIcon, 
   ShoppingBagIcon,
-  ArrowTrendingUpIcon,
+  // ArrowTrendingUpIcon removed as unused
   CurrencyDollarIcon,
   CalendarDaysIcon,
   ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline'
 
 export default function ReportsPage() {
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  // const router = useRouter() // Removed unused variable
+  // const supabase = createClientComponentClient() // Removed unused variable
   const [mounted, setMounted] = useState(false)
   const themeContext = useTheme()
   const [themeState, setThemeState] = useState({
@@ -107,11 +107,14 @@ export default function ReportsPage() {
         </div>
 
         {/* Báo cáo sản phẩm */}
-        <div className={`bg-white overflow-hidden shadow rounded-lg opacity-60 cursor-not-allowed`}>
+        <Link
+          href="/dashboard/reports/products" // Add link to the new page
+          className={`bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300`} // Remove disabled styles
+        >
           <div className="p-5">
             <div className="flex items-center">
-              <div className={`flex-shrink-0 rounded-md p-3 bg-gray-100`}>
-                <ShoppingBagIcon className={`h-6 w-6 text-gray-600`} />
+              <div className={`flex-shrink-0 rounded-md p-3 bg-${themeColor}-100`}> {/* Use theme color */}
+                <ShoppingBagIcon className={`h-6 w-6 text-${themeColor}-600`} /> {/* Use theme color */}
               </div>
               <div className="ml-5 w-0 flex-1">
                 <h3 className="text-lg font-medium text-gray-900">Báo cáo sản phẩm</h3>
@@ -123,12 +126,12 @@ export default function ReportsPage() {
           </div>
           <div className={`bg-gray-50 px-5 py-3 border-t border-gray-200`}>
             <div className="text-sm">
-              <span className={`font-medium text-gray-400`}>
-                Đang phát triển
-              </span>
+              <span className={`font-medium text-${themeColor}-600`}> {/* Use theme color */}
+                Xem báo cáo
+              </span> {/* Change text */}
             </div>
           </div>
-        </div>
+        </Link> {/* Add missing closing Link tag */}
 
         {/* Báo cáo doanh thu */}
         <div className={`bg-white overflow-hidden shadow rounded-lg opacity-60 cursor-not-allowed`}>

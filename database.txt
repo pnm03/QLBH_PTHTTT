@@ -18,10 +18,11 @@ phone (VARCHAR(11)) – Số điện thoại.
 created_at (TIMESTAMPTZ) – Ngày tạo hồ sơ.
 
 updated_at (TIMESTAMPTZ) – Ngày cập nhật thông tin gần nhất.
+del
 
 2. accounts
 Lưu thông tin đăng nhập của người dùng.
-user_id (UUID, PK) – Khóa chính, định danh tài khoản.
+id (UUID, PK) – Khóa chính, định danh tài khoản.
 user_id (UUID, FK, Unique) – Khóa ngoại tham chiếu đến Users.user_id.
 username (VARCHAR(50), UNIQUE) – Tên đăng nhập.
 
@@ -77,6 +78,7 @@ payment_method (INT, FK) – Khóa ngoại đến Payments.payment_id.
 
 5. Chi tiết đơn hàng (OrderDetails)
 Lưu thông tin chi tiết từng sản phẩm trong đơn hàng.
+orderdetail_id (text, PK, Auto) – Khóa chính.
 
 order_id (text, PK, FK) – Khóa ngoại đến Orders.order_id.
 
