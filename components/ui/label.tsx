@@ -21,5 +21,3 @@ export function Label({
     </label>
   );
 }
-
-export default Label;

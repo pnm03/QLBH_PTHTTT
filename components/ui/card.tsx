@@ -5,7 +5,7 @@ interface CardProps {
   children: React.ReactNode;
 }
 
-export function Card({ className = '', children }: CardProps) {
+function Card({ className = '', children }: CardProps) {
   return (
     <div className={`bg-white rounded-lg border border-gray-200 ${className}`}>
       {children}
@@ -18,7 +18,7 @@ interface CardHeaderProps {
   children: React.ReactNode;
 }
 
-export function CardHeader({ className = '', children }: CardHeaderProps) {
+function CardHeader({ className = '', children }: CardHeaderProps) {
   return (
     <div className={`px-6 py-4 border-b border-gray-200 ${className}`}>
       {children}
@@ -31,7 +31,7 @@ interface CardTitleProps {
   children: React.ReactNode;
 }
 
-export function CardTitle({ className = '', children }: CardTitleProps) {
+function CardTitle({ className = '', children }: CardTitleProps) {
   return (
     <h3 className={`text-lg font-semibold ${className}`}>
       {children}
@@ -44,7 +44,7 @@ interface CardContentProps {
   children: React.ReactNode;
 }
 
-export function CardContent({ className = '', children }: CardContentProps) {
+function CardContent({ className = '', children }: CardContentProps) {
   return (
     <div className={`px-6 py-4 ${className}`}>
       {children}
@@ -57,7 +57,7 @@ interface CardFooterProps {
   children: React.ReactNode;
 }
 
-export function CardFooter({ className = '', children }: CardFooterProps) {
+function CardFooter({ className = '', children }: CardFooterProps) {
   return (
     <div className={`px-6 py-4 border-t border-gray-200 ${className}`}>
       {children}
