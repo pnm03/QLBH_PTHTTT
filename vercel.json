@@ -3,25 +3,5 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "regions": ["sin1"],
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "https://fahdxzimrpnnqksxjrcx.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhaGR4emltcnBubnFrc3hqcmN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MTk1OTcsImV4cCI6MjA2MDM5NTU5N30.rLZzMBxHLLJlJOgDobI4lkunR2GFNFOxjHrIJ3NwMR4",
-    "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhaGR4emltcnBubnFrc3hqcmN4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NDgxOTU5NywiZXhwIjoyMDYwMzk1NTk3fQ.3J2Q9Srh_DmKZ-nSGIyUy1Sbs61dtGkB6ed7KhV9f74"
-  },
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/"
-    }
-  ],
-  "github": {
-    "silent": true
-  }
+  "regions": ["sin1"]
 }
