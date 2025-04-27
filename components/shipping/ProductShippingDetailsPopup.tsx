@@ -104,20 +104,40 @@ export default function ProductShippingDetailsPopup({
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-      <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className={`px-6 py-4 border-b border-gray-200 bg-${themeColor}-50 rounded-t-lg flex justify-between items-center`}>
-          <h3 className={`text-lg font-medium text-${themeColor}-900`}>
-            Chi tiết vận chuyển: {productName}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
-          >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Overlay */}
+      <div className="fixed inset-0 backdrop-brightness-[0.5] backdrop-blur-[0.8px]" onClick={onClose}></div>
+
+      {/* Modal */}
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div
+          className="relative bg-white rounded-lg max-w-4xl w-full max-h-[90vh] flex flex-col"
+          style={{
+            borderWidth: '2px',
+            borderStyle: 'solid',
+            borderColor: themeColor === 'indigo' ? '#818cf8' :
+                        themeColor === 'blue' ? '#60a5fa' :
+                        themeColor === 'red' ? '#f87171' :
+                        themeColor === 'green' ? '#6ee7b7' :
+                        themeColor === 'purple' ? '#c084fc' :
+                        themeColor === 'pink' ? '#f472b6' :
+                        themeColor === 'yellow' ? '#fcd34d' :
+                        themeColor === 'orange' ? '#fb923c' : '#818cf8'
+          }}
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center p-4 border-b">
+            <h3 className="text-lg font-medium text-gray-900">
+              Chi tiết vận chuyển: {productName}
+            </h3>
+            <button
+              type="button"
+              className="text-gray-400 hover:text-gray-500"
+              onClick={onClose}
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </button>
+          </div>
 
         {/* Body */}
         <div className="p-6 overflow-y-auto flex-grow">
@@ -192,13 +212,15 @@ export default function ProductShippingDetailsPopup({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+        <div className="p-4 border-t border-gray-200 flex justify-end">
           <button
+            type="button"
             onClick={onClose}
-            className={`px-4 py-2 bg-${themeColor}-600 text-white rounded-md hover:bg-${themeColor}-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${themeColor}-500`}
+            className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-${themeColor}-600 hover:bg-${themeColor}-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${themeColor}-500`}
           >
             Đóng
           </button>
+        </div>
         </div>
       </div>
     </div>
